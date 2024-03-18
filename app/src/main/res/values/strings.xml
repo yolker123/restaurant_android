@@ -1,3 +1,32 @@
 <resources>
     <string name="app_name">AndroidERestaurant</string>
+    <string-array name="entrees_titles">
+        <item>Entrée 1</item>
+        <item>Entrée 2</item>
+        <item>Entrée 3</item>
+        <item>Entrée 4</item>
+        <item>Entrée 5</item>
+        <item>Entrée 6</item>
+        <item>Entrée 4</item>
+        <item>Entrée 5</item>
+        <item>Entrée 6</item>
+        <item>Entrée 4</item>
+        <item>Entrée 5</item>
+        <item>Entrée 6</item>
+        <item>Entrée 4</item>
+        <item>Entrée 5</item>
+        <item>Entrée 6</item>
+
+    </string-array>
+    <string-array name="plats_titles">
+        <item>Plat 1</item>
+        <item>Plat 2</item>
+        <item>Plat 3</item>
+    </string-array>
+    <string-array name="desserts_titles">
+        <item>Dessert 1</item>
+        <item>Dessert 2</item>
+        <item>Dessert 3</item>
+    </string-array>
+
 </resources>
