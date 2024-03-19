@@ -1,5 +1,6 @@
 package fr.isen.volpelliere.androiderestaurant
 
+import MenuData
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -24,7 +25,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import coil.Coil
+import coil.request.CachePolicy
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.Response
+import com.android.volley.toolbox.ImageRequest
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import fr.isen.volpelliere.androiderestaurant.ui.theme.AndroidERestaurantTheme
+import org.json.JSONObject
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +56,7 @@ class HomeActivity : ComponentActivity() {
             }
         }
     }
+
     override fun onDestroy() {
         super.onDestroy()
         Log.e("HomeActivity", "HomeActivity est en train de se détruire.")
@@ -105,7 +118,8 @@ fun HomePage() {
         }
 
         Button(
-            onClick = { Toast.makeText(context, "Desserts sélectionnés", Toast.LENGTH_SHORT).show()
+            onClick = {
+                Toast.makeText(context, "Desserts sélectionnés", Toast.LENGTH_SHORT).show()
                 val intent = Intent(context, CategoryActivity::class.java)
                 intent.putExtra("category", "Desserts")
                 context.startActivity(intent)},
