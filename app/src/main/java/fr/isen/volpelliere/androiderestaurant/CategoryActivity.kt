@@ -12,7 +12,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,6 +40,7 @@ import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -182,71 +182,11 @@ fun CategoryScreen(category: String, items: MutableList<MenuItem>,  navigateToDe
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) { // Appliquer la couleur de fond ici
-            LazyColumn(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally) {
-                items(items) { item ->
-                    var lastSuccessfulIndex = -1
-                    var loadImage = true
-                    Button(
-                        onClick = { navigateToDetail(item) }, // Gère le clic sur l'élément
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3380EF)),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (loadImage && item.images.isNotEmpty()) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(item.images.getOrNull(imageIndex))
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = item.name_fr,
-                                    modifier = Modifier.size(100.dp),
-                                    contentScale = ContentScale.Crop,
-                                    onSuccess = {
-                                        // L'image a été chargée avec succès, rien à faire ici
-                                    },
-                                    onError = {
-                                        // Si une image échoue, vérifie si d'autres images sont disponibles
-                                        if (imageIndex < item.images.lastIndex) {
-                                            imageIndex++ // Tenter la prochaine image
-                                        } else {
-                                            loadImage = false // Aucune image ne peut être chargée, afficher l'image par défaut
-                                        }
-                                    }
-                                )
-                            } else {
-                                // Affiche une image par défaut si aucune image ne peut être chargée
-                                Image(
-                                    painter = painterResource(id = R.drawable.notavailable),
-                                    contentDescription = "Image par défaut",
-                                    modifier = Modifier.size(100.dp),
-                                    contentScale = ContentScale.Crop,
-                                )
-
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                Text(
-                                    text = item.name_fr,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Start,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                Text(
-                                    text = "${item.prices[0].price} €",
-                                    color = Color.White,
-                                    textAlign = TextAlign.Start,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                    }
-                }
+        LazyColumn(modifier = Modifier.padding(innerPadding),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            items(items) { item ->
+                CategoryItem(item = item, navigateToDetail = navigateToDetail)
             }
         }
     }
@@ -255,7 +195,7 @@ fun CategoryScreen(category: String, items: MutableList<MenuItem>,  navigateToDe
 
 @Composable
 fun ItemImage(images: List<String>, contentDescription: String) {
-    var imageIndex by remember { mutableStateOf(0) }
+    var imageIndex by remember { mutableIntStateOf(0) }
     var loadImage by remember { mutableStateOf(true) }
 
     if (loadImage && images.isNotEmpty()) {
@@ -267,20 +207,16 @@ fun ItemImage(images: List<String>, contentDescription: String) {
             contentDescription = contentDescription,
             modifier = Modifier.size(100.dp),
             contentScale = ContentScale.Crop,
-            onSuccess = {
-                // L'image a été chargée avec succès, rien à faire ici
-            },
+
             onError = {
-                // Si une image échoue, vérifie si d'autres images sont disponibles
                 if (imageIndex < images.lastIndex) {
-                    imageIndex++ // Tenter la prochaine image
+                    imageIndex++
                 } else {
-                    loadImage = false // Aucune image ne peut être chargée, afficher l'image par défaut
+                    loadImage = false 
                 }
             }
         )
     } else {
-        // Affiche une image par défaut si aucune image ne peut être chargée
         Image(
             painter = painterResource(id = R.drawable.notavailable),
             contentDescription = "Image par défaut",
@@ -292,9 +228,6 @@ fun ItemImage(images: List<String>, contentDescription: String) {
 
 @Composable
 fun CategoryItem(item: MenuItem, navigateToDetail: (MenuItem) -> Unit) {
-    var imageIndex by remember { mutableStateOf(0) }
-    val context = LocalContext.current
-
     Button(
         onClick = { navigateToDetail(item) }, // Gère le clic sur l'élément
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3380EF)),
@@ -304,6 +237,21 @@ fun CategoryItem(item: MenuItem, navigateToDetail: (MenuItem) -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             ItemImage(images = item.images, item.name_fr)
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Column {
+            Text(
+                text = item.name_fr,
+                color = Color.White,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "${item.prices[0].price} €",
+                color = Color.White,
+                textAlign = TextAlign.Start,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

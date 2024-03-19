@@ -1,5 +1,6 @@
 package fr.isen.volpelliere.androiderestaurant
 
+import Ingredient
 import MenuItem
 import android.app.Activity
 import android.os.Build
@@ -7,14 +8,15 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.BottomAppBar
@@ -31,16 +33,18 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
@@ -75,6 +79,7 @@ fun DetailedScreen(item: MenuItem) {
     val IntPrice =quantity * item.prices.first().price.toInt()
     val skyBlue = Color(0xFF3380EF)
     val buttonColors = ButtonDefaults.buttonColors(containerColor = skyBlue)
+    val buttonColors2 = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
     Scaffold(
         containerColor = Color.White,
         topBar = {
@@ -112,48 +117,57 @@ fun DetailedScreen(item: MenuItem) {
             }
         },
     ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) { // Appliquer la couleur de fond ici
-            Column(modifier = Modifier.padding(innerPadding)) {
-
-                ImageCarousel(images = item.images, pagerState = pagerState)
-
-                Text(
-                    text = item.name_fr,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(colors=buttonColors, onClick = { if (quantity > 1) quantity-- }) {
-                        Text("-")
-                    }
+        Box(modifier = Modifier) {
+            LazyColumn(modifier = Modifier.padding(innerPadding)) {
+                item {
+                    ImageCarousel(images = item.images, pagerState = pagerState)
+                }
+                item {
                     Text(
-                        text = "$quantity",
+                        text = item.name_fr,
                         modifier = Modifier
-                            .padding(horizontal = 8.dp)
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center
                     )
-                    Button(colors=buttonColors, onClick = { quantity++ }) {
-                        Text("+")
+                }
+                item {
+                    IngredientsList(ingredients = item.ingredients)
+                }
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Button(colors = buttonColors, onClick = { if (quantity > 1) quantity-- }) {
+                            Text(text = "-")
+                        }
+                        Text(
+                            text = "$quantity",
+                            modifier = Modifier
+                                .padding(horizontal = 30.dp, vertical = 12.dp)
+                        )
+                        Button(colors = buttonColors, onClick = { quantity++ }) {
+                            Text(text = "+")
+                        }
                     }
                 }
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(48.dp),
-                    color = Color.LightGray // Vous pouvez choisir la couleur que vous souhaitez
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "Prix : ${IntPrice} €", // Supposant que vous utilisez le premier prix listé
-                            textAlign = TextAlign.Center
-                        )
+                item {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .height(48.dp),
+                        color = Color.LightGray // Vous pouvez choisir la couleur que vous souhaitez
+                    ) {
+                        Button(colors = buttonColors2, onClick = { /* TODO */ }) {
+                            Text(
+                                text = "Total : ${IntPrice} €",
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }
@@ -173,11 +187,44 @@ fun ImageCarousel(images: List<String>, pagerState: PagerState) {
             .fillMaxWidth()
             .height(250.dp)
     ) { page ->
-        AsyncImage(
-            model = images[page],
-            contentDescription = "Image ${page + 1}",
-            modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.Crop
-        )
+        var loadImage by remember { mutableStateOf(true) }
+        var imageIndex by remember { mutableIntStateOf(page) } // Initialiser avec 'page' pour garder la logique par page
+
+        if (loadImage) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(images.getOrNull(imageIndex))
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Image ${imageIndex + 1}",
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.Crop,
+                onError = {
+                    loadImage = false // Aucune autre image à essayer, affichez une image par défaut
+                }
+            )
+        }
+        if (!loadImage || images.isEmpty()) {
+            // Affiche une image par défaut si aucune image ne peut être chargée ou la liste est vide
+            Image(
+                painter = painterResource(id = R.drawable.notavailable),
+                contentDescription = "Image par défaut",
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.Crop,
+            )
+        }
     }
+}
+
+@Composable
+fun IngredientsList(ingredients: List<Ingredient>) {
+    val ingredientsText = ingredients.joinToString(separator = ", ") { it.name_fr }
+
+    Text(
+        text = ingredientsText,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        textAlign = TextAlign.Center
+    )
 }
