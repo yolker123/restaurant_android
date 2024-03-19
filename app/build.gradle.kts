@@ -61,6 +61,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.8")
     implementation("io.coil-kt:coil:1.4.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("com.google.accompanist:accompanist-pager:0.24.1-alpha")
     implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

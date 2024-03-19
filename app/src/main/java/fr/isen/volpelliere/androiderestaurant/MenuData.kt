@@ -1,9 +1,10 @@
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class MenuData(
     @SerializedName("data")
     val data: List<MenuCategory>
-)
+) : Serializable
 
 data class MenuCategory(
     @SerializedName("name_fr")
@@ -12,28 +13,28 @@ data class MenuCategory(
     val name_en: String,
     @SerializedName("items")
     val items: List<MenuItem>
-)
+): Serializable
 
 data class MenuItem(
     @SerializedName("id")
-    val id: String,
+    val id: String = "",
     @SerializedName("name_fr")
-    val name_fr: String,
+    val name_fr: String = "",
     @SerializedName("name_en")
-    val name_en: String,
+    val name_en: String = "",
     @SerializedName("id_category")
-    val id_category: String,
+    val id_category: String = "",
     @SerializedName("categ_name_fr")
-    val categ_name_fr: String,
+    val categ_name_fr: String = "",
     @SerializedName("categ_name_en")
-    val categ_name_en: String,
+    val categ_name_en: String = "",
     @SerializedName("images")
-    val images: List<String>,
+    val images: List<String> = emptyList<String>(),
     @SerializedName("ingredients")
-    val ingredients: List<Ingredient>,
+    val ingredients: List<Ingredient> =emptyList<Ingredient>(),
     @SerializedName("prices")
-    val prices: List<Price>
-)
+    val prices: List<Price> =emptyList<Price>()
+): Serializable
 
 data class Ingredient(
     @SerializedName("id")
@@ -50,7 +51,7 @@ data class Ingredient(
     val update_date: String,
     @SerializedName("id_pizza")
     val id_pizza: String
-)
+): Serializable
 
 data class Price(
     @SerializedName("id")
@@ -67,4 +68,4 @@ data class Price(
     val update_date: String,
     @SerializedName("size")
     val size: String,
-)
+): Serializable
