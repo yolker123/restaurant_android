@@ -69,3 +69,15 @@ data class Price(
     @SerializedName("size")
     val size: String,
 ): Serializable
+
+data class CartItem(
+    @SerializedName("item")
+    val item: MenuItem,
+    @SerializedName("quantity")
+    val quantity: Int
+) : Serializable
+
+data class CartData(
+    @SerializedName("items")
+    val items: MutableList<CartItem>
+) : Serializable

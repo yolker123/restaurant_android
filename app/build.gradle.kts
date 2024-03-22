@@ -62,6 +62,7 @@ dependencies {
     implementation("io.coil-kt:coil:1.4.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("com.google.accompanist:accompanist-pager:0.24.1-alpha")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
     implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
