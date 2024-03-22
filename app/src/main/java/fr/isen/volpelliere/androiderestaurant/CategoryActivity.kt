@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -160,19 +159,6 @@ fun CategoryScreen(category: String, items: MutableList<MenuItem>,  navigateToDe
                             color =  Color.Black)
                     }
             )
-        },
-        bottomBar = {
-            BottomAppBar(
-                containerColor = Color(0xFF3380EF),
-                contentColor = Color.Black,
-            ) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    text = "Bottom app bar",
-                )
-            }
         },
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding),

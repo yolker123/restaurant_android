@@ -1,10 +1,10 @@
 package fr.isen.volpelliere.androiderestaurant
 
 import CartData
-import CartItem
 import Ingredient
 import MenuItem
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -39,6 +39,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +62,7 @@ import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import fr.isen.volpelliere.androiderestaurant.CartManager.addToCart
 import fr.isen.volpelliere.androiderestaurant.CartManager.readCart
+import fr.isen.volpelliere.androiderestaurant.CartManager.updateCartCount
 import fr.isen.volpelliere.androiderestaurant.ui.theme.AndroidERestaurantTheme
 
 
@@ -69,15 +71,14 @@ class DetailActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val item = intent.getSerializableExtra("MENU_ITEM") as MenuItem
-        val cartItem: MutableList<CartItem> = mutableListOf()
         setContent {
             AndroidERestaurantTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White
                 ) {
-                    DetailedScreen(item = item, navigateToCart = { CartItems ->
-                        navigateToCart(CartItems)
+                    DetailedScreen(item = item, navigateToCart = { cartItems ->
+                        navigateToCart(cartItems)
                     })
                 }
             }
@@ -97,11 +98,15 @@ fun DetailedScreen(item: MenuItem, navigateToCart: (CartData) -> Unit) {
     val context = LocalContext.current
     val pagerState = rememberPagerState()
     var quantity by remember { mutableIntStateOf(1) }
-    val IntPrice =quantity * item.prices.first().price.toInt()
+    Log.d("TEST5", "HELPPPP")
+    Log.d("TEST5", quantity.toString())
+    Log.d("TEST5", item.prices.first().price)
+    val IntPrice =quantity * item.prices.first().price.toDouble()
+    Log.d("TEST6", "HELPPPP")
     val skyBlue = Color(0xFF3380EF)
-    val cartCount = remember { mutableIntStateOf(CartManager.getCartCount(context)) }
     val buttonColors = ButtonDefaults.buttonColors(containerColor = skyBlue)
-    val buttonColors2 = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
+    updateCartCount(context)
+
     Scaffold(
         containerColor = Color.White,
         topBar = {
@@ -126,8 +131,7 @@ fun DetailedScreen(item: MenuItem, navigateToCart: (CartData) -> Unit) {
             )
         },
         floatingActionButton = {
-            Log.d("hey", readCart(context).toString())
-            CartIconWithBadge(cartCount.intValue, readCart(context), navigateToCart)
+            CartIconWithBadge(context, readCart(context), navigateToCart)
         }
     ) { innerPadding ->
         Box(modifier = Modifier) {
@@ -185,9 +189,7 @@ fun DetailedScreen(item: MenuItem, navigateToCart: (CartData) -> Unit) {
                         }
                     }
                     Button(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), colors=buttonColors ,onClick = {
-                        addToCart(item, quantity, context) {
-                            cartCount.value = CartManager.getCartCount(context)
-                        }
+                        addToCart(item, quantity, context)
                     }) {
                         Text(color= Color.White,text = "Ajouter au panier")
                     }
@@ -252,8 +254,8 @@ fun IngredientsList(ingredients: List<Ingredient>) {
 }
 
 @Composable
-fun CartIconWithBadge(cartCount : Int, cartData: CartData, navigateToCart: (CartData) -> Unit){
-
+fun CartIconWithBadge(context: Context, cartData: CartData, navigateToCart: (CartData) -> Unit){
+    val cartCount by CartManager.cartCountFlow.collectAsState()
     Box(contentAlignment = Alignment.TopEnd) {
         FloatingActionButton(
             onClick = { navigateToCart(cartData) },

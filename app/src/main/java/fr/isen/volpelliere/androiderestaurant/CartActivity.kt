@@ -1,6 +1,5 @@
 package fr.isen.volpelliere.androiderestaurant
 
-import CartData
 import CartItem
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -18,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,8 +31,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,14 +47,13 @@ import fr.isen.volpelliere.androiderestaurant.ui.theme.AndroidERestaurantTheme
 class CartActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val cartData = intent.getSerializableExtra("CART_ITEM") as CartData
         setContent {
             AndroidERestaurantTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CartScreen(context = this, cartData = cartData)
+                    CartScreen(context = this)
                 }
             }
         }
@@ -61,9 +62,10 @@ class CartActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("MutableCollectionMutableState", "RememberReturnType")
 @Composable
-fun CartScreen(context: Context, cartData: CartData) {
-    val cartItems = remember(cartData.items) { mutableStateListOf(*cartData.items.toTypedArray()) }
-    val totalPrice = remember(cartItems) { cartItems.sumOf { it.item.prices[0].price.toInt() * it.quantity } }
+fun CartScreen(context: Context) {
+    var cartItems by remember { mutableStateOf(readCart(context).items) }
+    val totalPrice = cartItems.sumOf { it.item.prices[0].price.toDouble() * it.quantity }
+
     Scaffold(
         containerColor = Color.White,
         topBar = {
@@ -91,10 +93,8 @@ fun CartScreen(context: Context, cartData: CartData) {
         Column {
             LazyColumn(modifier = Modifier.weight(1f).padding(innerPadding)) {
                 items(cartItems) { cartItem ->
-                    CartItemRow(cartItem = cartItem, context = context) {
-                        // Cette lambda est appelée pour demander la mise à jour de l'affichage.
-                        cartItems.clear()
-                        cartItems.addAll(readCart(context).items)
+                    CartItemRow(cartItem = cartItem, context) {
+                        cartItems = readCart(context).items
                     }
                 }
             }
@@ -114,11 +114,12 @@ fun CartScreen(context: Context, cartData: CartData) {
                 ) {
                     Text("Passer la commande")
                 }
-
+                val activityContext = LocalContext.current as Activity
                 Button(
                     onClick = {
                         clearCart(context)
                         cartItems.clear()
+                        activityContext.finish()
                     },
                     modifier = Modifier.weight(1f).padding(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
@@ -134,10 +135,27 @@ fun CartScreen(context: Context, cartData: CartData) {
 fun CartItemRow(cartItem: CartItem, context: Context, onUpdate: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
         Text(text = cartItem.item.name_fr, modifier = Modifier.weight(1f))
-        Text(text = "Quantité : ${cartItem.quantity}")
+
         IconButton(onClick = {
-            // TODO: Implémenter la logique pour supprimer cet article du panier
-            // removeFromCart(context, cartItem.item.id)
+            if (cartItem.quantity > 1) {
+                CartManager.updateCartItemQuantity(context, cartItem.item.id, cartItem.quantity - 1)
+                onUpdate()
+            }
+        }) {
+            Icon(Icons.Default.ArrowBack, contentDescription = "Diminuer la quantité")
+        }
+
+        Text(text = "Quantité : ${cartItem.quantity}")
+
+        IconButton(onClick = {
+            CartManager.updateCartItemQuantity(context, cartItem.item.id, cartItem.quantity + 1)
+            onUpdate()
+        }) {
+            Icon(Icons.Default.ArrowForward, contentDescription = "Augmenter la quantité")
+        }
+
+        IconButton(onClick = {
+            CartManager.removeFromCart(context, cartItem.item.id)
             onUpdate()
         }) {
             Icon(Icons.Default.Delete, contentDescription = "Supprimer")
