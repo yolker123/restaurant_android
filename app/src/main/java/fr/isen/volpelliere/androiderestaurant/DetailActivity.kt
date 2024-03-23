@@ -1,14 +1,8 @@
 package fr.isen.volpelliere.androiderestaurant
 
-import CartData
-import Ingredient
-import MenuItem
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -25,14 +19,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -61,7 +54,7 @@ import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import fr.isen.volpelliere.androiderestaurant.CartManager.addToCart
-import fr.isen.volpelliere.androiderestaurant.CartManager.readCart
+import fr.isen.volpelliere.androiderestaurant.CartManager.navigateToCart
 import fr.isen.volpelliere.androiderestaurant.CartManager.updateCartCount
 import fr.isen.volpelliere.androiderestaurant.ui.theme.AndroidERestaurantTheme
 
@@ -77,121 +70,44 @@ class DetailActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color.White
                 ) {
-                    DetailedScreen(item = item, navigateToCart = { cartItems ->
-                        navigateToCart(cartItems)
-                    })
+                    DetailedScreen(item = item)
                 }
             }
         }
     }
 
-    private fun navigateToCart(items: CartData) {
-        val intent = Intent(this, CartActivity::class.java)
-        intent.putExtra("CART_ITEM", items)
-        this.startActivity(intent)
-    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPagerApi::class)
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun DetailedScreen(item: MenuItem, navigateToCart: (CartData) -> Unit) {
+fun DetailedScreen(item: MenuItem) {
     val context = LocalContext.current
     val pagerState = rememberPagerState()
     var quantity by remember { mutableIntStateOf(1) }
-    Log.d("TEST5", "HELPPPP")
-    Log.d("TEST5", quantity.toString())
-    Log.d("TEST5", item.prices.first().price)
-    val IntPrice =quantity * item.prices.first().price.toDouble()
-    Log.d("TEST6", "HELPPPP")
-    val skyBlue = Color(0xFF3380EF)
+    val price =quantity * item.prices.first().price.toDouble()
+    val skyBlue = Color(0xFF0556AC)
     val buttonColors = ButtonDefaults.buttonColors(containerColor = skyBlue)
     updateCartCount(context)
 
     Scaffold(
         containerColor = Color.White,
-        topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    val activityContext = LocalContext.current as Activity
-                    IconButton(onClick = {
-                        activityContext.finish()
-                    }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Retour")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF3380EF),
-                    titleContentColor = Color.Black,
-                ),
-                title = {
-                    Text(text = item.name_fr,
-                        modifier = Modifier.padding(16.dp),
-                        color =  Color.Black)
-                }
-            )
-        },
-        floatingActionButton = {
-            CartIconWithBadge(context, readCart(context), navigateToCart)
-        }
+        topBar = { DetailTopBar(item) },
+        floatingActionButton = { CartIconWithBadge(context) }
     ) { innerPadding ->
         Box(modifier = Modifier) {
             LazyColumn(modifier = Modifier.padding(innerPadding)) {
+                item { ImageCarousel(images = item.images, pagerState = pagerState) }
+                item { Text(text = item.nameFr, modifier = Modifier.fillMaxWidth().padding(16.dp), textAlign = TextAlign.Center) }
+                item { IngredientsList(ingredients = item.ingredients) }
                 item {
-                    ImageCarousel(images = item.images, pagerState = pagerState)
+                    QuantitySelector(quantity = quantity, buttonColors = buttonColors, onIncrease = { quantity++ }, onDecrease = { if (quantity > 1) quantity-- })
                 }
                 item {
-                    Text(
-                        text = item.name_fr,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-                item {
-                    IngredientsList(ingredients = item.ingredients)
-                }
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Button(colors = buttonColors, onClick = { if (quantity > 1) quantity-- }) {
-                            Text(text = "-")
-                        }
-                        Text(
-                            text = "$quantity",
-                            modifier = Modifier
-                                .padding(horizontal = 30.dp, vertical = 12.dp)
-                        )
-                        Button(colors = buttonColors, onClick = { quantity++ }) {
-                            Text(text = "+")
-                        }
-                    }
-                }
-                item {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .height(48.dp),
-                        color = Color.LightGray
-
-                        // Vous pouvez choisir la couleur que vous souhaitez
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "Total : ${IntPrice} €",
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
+                    TotalPriceDisplay(totalPrice = price)
                     Button(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), colors=buttonColors ,onClick = {
                         addToCart(item, quantity, context)
                     }) {
-                        Text(color= Color.White,text = "Ajouter au panier")
+                        Text(fontSize = 20.sp, color= Color.White,text = "Ajouter au panier")
                     }
                 }
             }
@@ -242,39 +158,110 @@ fun ImageCarousel(images: List<String>, pagerState: PagerState) {
 
 @Composable
 fun IngredientsList(ingredients: List<Ingredient>) {
-    val ingredientsText = ingredients.joinToString(separator = ", ") { it.name_fr }
-
+    val ingredientsText = ingredients.joinToString(separator = ", ") { it.nameFr }
     Text(
-        text = ingredientsText,
+        fontSize = 15.sp,
+        text = "Ingredients :",
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
+        textAlign = TextAlign.Start
+    )
+    Text(
+        fontSize = 15.sp,
+        text = ingredientsText,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
         textAlign = TextAlign.Center
     )
 }
 
 @Composable
-fun CartIconWithBadge(context: Context, cartData: CartData, navigateToCart: (CartData) -> Unit){
+fun CartIconWithBadge(context: Context){
     val cartCount by CartManager.cartCountFlow.collectAsState()
     Box(contentAlignment = Alignment.TopEnd) {
         FloatingActionButton(
-            onClick = { navigateToCart(cartData) },
-            containerColor = Color(0xFF3380EF),
+            onClick = { navigateToCart(context) },
+            containerColor = Color(0xFF0556AC),
             contentColor = Color.White,
-            modifier = Modifier.size(96.dp)
+            modifier = Modifier.size(85.dp)
         ) {
             Icon(Icons.Default.ShoppingCart, contentDescription = "Panier", modifier = Modifier.size(48.dp))
         }
         if (cartCount > 0) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(38.dp)
                     .background(Color.Red, CircleShape)
                     .align(Alignment.TopEnd),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = cartCount.toString(), fontSize = 24.sp, color = Color.White)
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DetailTopBar(item: MenuItem) {
+    TopAppBar(
+        navigationIcon = {
+            BackButton()
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color(0xFF0556AC),
+            titleContentColor = Color.White,
+        ),
+        title = {
+            Text(text = item.nameFr,
+                modifier = Modifier.padding(16.dp),
+                color =  Color.White)
+        }
+    )
+}
+
+@Composable
+fun QuantitySelector(quantity: Int, buttonColors: ButtonColors, onIncrease: () -> Unit, onDecrease: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Button(colors = buttonColors, onClick = onDecrease) {
+            Text(fontSize = 20.sp, text = "-")
+        }
+        Text(
+            text = "$quantity",
+            modifier = Modifier
+                .padding(horizontal = 30.dp, vertical = 12.dp)
+        )
+        Button(colors = buttonColors, onClick = onIncrease) {
+            Text(fontSize = 20.sp, text = "+")
+        }
+    }
+}
+
+
+@Composable
+fun TotalPriceDisplay(totalPrice: Double) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .height(48.dp),
+        color = Color.LightGray
+
+        // Vous pouvez choisir la couleur que vous souhaitez
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                fontSize = 20.sp,
+                text = "Total : $totalPrice €",
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

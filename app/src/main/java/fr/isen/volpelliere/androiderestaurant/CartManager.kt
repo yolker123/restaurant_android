@@ -1,10 +1,8 @@
 package fr.isen.volpelliere.androiderestaurant
 
-import CartData
-import CartItem
-import MenuItem
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +12,11 @@ object CartManager {
     val cartCountFlow = _cartCountFlow.asStateFlow()
     private fun getInitialCartCount(): Int {
           return 0
+    }
+
+    fun navigateToCart(context: Context) {
+        val intent = Intent(context, CartActivity::class.java)
+        context.startActivity(intent)
     }
 
     fun addToCart(item: MenuItem, quantity: Int, context: Context) {
@@ -70,8 +73,8 @@ object CartManager {
     }
 
     fun removeFromCart(context: Context, itemId: String) {
-        val CartData = readCart(context)
-        val updatedCart = CartData.items.filterNot { it.item.id == itemId }.toMutableList()
+        val cartData = readCart(context)
+        val updatedCart = cartData.items.filterNot { it.item.id == itemId }.toMutableList()
         writeCart(context, updatedCart)
 
         // Mise à jour du compteur du panier dans les préférences partagées
@@ -116,5 +119,4 @@ object CartManager {
             updateCartCount(context)
         }
     }
-
 }

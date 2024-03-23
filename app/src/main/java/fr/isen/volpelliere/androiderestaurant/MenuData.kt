@@ -1,3 +1,5 @@
+package fr.isen.volpelliere.androiderestaurant
+
 import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
@@ -8,9 +10,9 @@ data class MenuData(
 
 data class MenuCategory(
     @SerializedName("name_fr")
-    val name_fr: String,
+    val nameFr: String,
     @SerializedName("name_en")
-    val name_en: String,
+    val nameEn: String,
     @SerializedName("items")
     val items: List<MenuItem>
 ): Serializable
@@ -19,53 +21,53 @@ data class MenuItem(
     @SerializedName("id")
     val id: String = "",
     @SerializedName("name_fr")
-    val name_fr: String = "",
+    val nameFr: String = "",
     @SerializedName("name_en")
-    val name_en: String = "",
+    val nameEn: String = "",
     @SerializedName("id_category")
-    val id_category: String = "",
+    val idCategory: String = "",
     @SerializedName("categ_name_fr")
-    val categ_name_fr: String = "",
+    val categoryNameFr: String = "",
     @SerializedName("categ_name_en")
-    val categ_name_en: String = "",
+    val categoryNameEn: String = "",
     @SerializedName("images")
-    val images: List<String> = emptyList<String>(),
+    val images: List<String> = emptyList(),
     @SerializedName("ingredients")
-    val ingredients: List<Ingredient> =emptyList<Ingredient>(),
+    val ingredients: List<Ingredient> =emptyList(),
     @SerializedName("prices")
-    val prices: List<Price> =emptyList<Price>()
+    val prices: List<Price> =emptyList()
 ): Serializable
 
 data class Ingredient(
     @SerializedName("id")
     val id: String,
     @SerializedName("id_shop")
-    val id_shop: String,
+    val idShop: String,
     @SerializedName("name_fr")
-    val name_fr: String,
+    val nameFr: String,
     @SerializedName("name_en")
-    val name_en: String,
+    val nameEn: String,
     @SerializedName("create_date")
-    val create_date: String,
+    val createDate: String,
     @SerializedName("update_date")
-    val update_date: String,
+    val updateDate: String,
     @SerializedName("id_pizza")
-    val id_pizza: String
+    val idPizza: String
 ): Serializable
 
 data class Price(
     @SerializedName("id")
     val id: String,
     @SerializedName("id_pizza")
-    val id_pizza: String,
+    val idPizza: String,
     @SerializedName("id_size")
-    val id_size: String,
+    val idSize: String,
     @SerializedName("price")
     val price: String,
     @SerializedName("create_date")
-    val create_date: String,
+    val createDate: String,
     @SerializedName("update_date")
-    val update_date: String,
+    val updateDate: String,
     @SerializedName("size")
     val size: String,
 ): Serializable

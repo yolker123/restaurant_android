@@ -2,33 +2,33 @@
 
 package fr.isen.volpelliere.androiderestaurant
 
-import MenuData
-import MenuItem
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,8 +46,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -69,16 +70,15 @@ class CategoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val category = intent.getStringExtra("category") ?: "Catégorie non spécifiée"
-        Log.d("Help1", category)
         lifecycleScope.launch {
-            val tab_categories = filterByCategory(category)
+            val tabCategories = filterByCategory(category)
             setContent {
                 AndroidERestaurantTheme {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         color = Color.White
                     ) {
-                        CategoryScreen(category = category, items = tab_categories, navigateToDetail = { item ->
+                        CategoryScreen(category = category, items = tabCategories, navigateToDetail = { item ->
                             navigateToDetailScreen(item)
                         })
                     }
@@ -95,18 +95,18 @@ class CategoryActivity : ComponentActivity() {
                 put("id_shop", "1")
             }
 
-            val tab_categories = mutableListOf<MenuItem>()
+            val tabCategories = mutableListOf<MenuItem>()
             val jsonObjectRequest = JsonObjectRequest(Request.Method.POST, url, idShopJsonObject,
                 { response ->
                     try {
                         val gson = Gson()
                         val menuData: MenuData = gson.fromJson(response.toString(), MenuData::class.java)
-                        menuData.data.filter { it.name_fr == category }.forEach { categoryData ->
+                        menuData.data.filter { it.nameFr == category }.forEach { categoryData ->
                             categoryData.items.forEach { item ->
-                                tab_categories.add(item)
+                                tabCategories.add(item)
                             }
                         }
-                        continuation.resume(tab_categories)
+                        continuation.resume(tabCategories)
                     } catch (e: Exception) {
                         continuation.resumeWithException(e)
                     }
@@ -117,9 +117,8 @@ class CategoryActivity : ComponentActivity() {
 
             requestQueue.add(jsonObjectRequest)
 
-            // Gestion de l'annulation de la coroutine
             continuation.invokeOnCancellation {
-                requestQueue.cancelAll { true } // Annuler toutes les requêtes si la coroutine est annulée
+                requestQueue.cancelAll { true }
             }
         }
     }
@@ -130,36 +129,15 @@ class CategoryActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryScreen(category: String, items: MutableList<MenuItem>,  navigateToDetail: (MenuItem) -> Unit) {
-    var presses by remember { mutableIntStateOf(0) }
+fun CategoryScreen(category: String, items: MutableList<MenuItem>, navigateToDetail: (MenuItem) -> Unit) {
     val context = LocalContext.current
-    var imageIndex by remember { mutableIntStateOf(0) }
-    Log.d("hey", items.toString())
     Scaffold(
         containerColor = Color.White,
         topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    val activityContext = LocalContext.current as Activity
-                    IconButton(onClick = {
-                        activityContext.finish()
-                    }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Retour")
-                    }
-                },
-                colors = topAppBarColors(
-                    containerColor = Color(0xFF3380EF),
-                    titleContentColor = Color.Black,
-                ),
-                title = {
-                        Text(text = category,
-                            modifier = Modifier.padding(16.dp),
-                            color =  Color.Black)
-                    }
-            )
+            CategoryTopBar(category)
         },
+        floatingActionButton = { CartIconWithBadge(context) }
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding),
             verticalArrangement = Arrangement.Center,
@@ -184,7 +162,7 @@ fun ItemImage(images: List<String>, contentDescription: String) {
                 .crossfade(true)
                 .build(),
             contentDescription = contentDescription,
-            modifier = Modifier.size(100.dp),
+            modifier = Modifier.fillMaxWidth().aspectRatio(1.78f).padding(8.dp),
             contentScale = ContentScale.Crop,
 
             onError = {
@@ -199,7 +177,7 @@ fun ItemImage(images: List<String>, contentDescription: String) {
         Image(
             painter = painterResource(id = R.drawable.notavailable),
             contentDescription = "Image par défaut",
-            modifier = Modifier.size(100.dp),
+            modifier = Modifier.fillMaxWidth().aspectRatio(1.78f).padding(8.dp),
             contentScale = ContentScale.Crop,
         )
     }
@@ -207,31 +185,67 @@ fun ItemImage(images: List<String>, contentDescription: String) {
 
 @Composable
 fun CategoryItem(item: MenuItem, navigateToDetail: (MenuItem) -> Unit) {
-    Button(
-        onClick = { navigateToDetail(item) }, // Gère le clic sur l'élément
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF3380EF)),
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 4.dp, horizontal = 8.dp)
+            .clickable { navigateToDetail(item) },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFCAAE1E)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ItemImage(images = item.images, item.name_fr)
-        }
-        Spacer(modifier = Modifier.width(16.dp))
         Column {
-            Text(
-                text = item.name_fr,
-                color = Color.White,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = "${item.prices[0].price} €",
-                color = Color.White,
-                textAlign = TextAlign.Start,
-                modifier = Modifier.fillMaxWidth()
-            )
+            ItemImage(images = item.images, contentDescription = item.nameFr)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF0556AC))
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = item.nameFr,
+                    color = Color.White,
+                    fontSize = 25.sp,
+                    fontStyle = FontStyle.Italic,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                Text(
+                    text = "${item.prices[0].price} €",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
         }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CategoryTopBar(category: String) {
+    TopAppBar(
+        navigationIcon = {
+            BackButton()
+        },
+        title = {
+            Text(text = category, modifier = Modifier.padding(16.dp), color = Color.White)
+        },
+        colors = topAppBarColors(containerColor = Color(0xFF0556AC), titleContentColor = Color.White),
+    )
+}
+
+@Composable
+fun BackButton() {
+    val activityContext = LocalContext.current as Activity
+    IconButton(onClick = { activityContext.finish() }) {
+        Icon(Icons.Filled.ArrowBack, contentDescription = "Retour", tint= Color.White)
     }
 }
 
